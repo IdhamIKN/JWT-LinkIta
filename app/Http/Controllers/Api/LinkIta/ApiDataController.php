@@ -14,6 +14,9 @@ use App\Constants\LKMethod;
 use App\Constants\LKConstant;
 use App\Models\lk_log;
 
+use Illuminate\Support\Facades\File;
+
+
 class ApiDataController extends Controller
 {
     /**
@@ -21,46 +24,6 @@ class ApiDataController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function getJwtToken()
-    {
-        $user = auth()->guard('api')->user();
-
-        if ($user) {
-            return $user->jwt;
-        } else {
-            // throw an exception or return an error response
-            throw new Exception('Gagal');
-        }
-    }
-
-    // Ambil Waktu
-    public function time()
-    {
-        $time = Carbon::now()->toDateTimeString();
-        return $time;
-    }
-
-    // Generate Signature
-    public function generateSignature($clientKey, $method, $kodeProduk, $waktu, $idPelanggan, $idMember, $ref1)
-    {
-        $stringToHash = $clientKey . "|" . $method . "|" . $kodeProduk . "|" . $waktu . "|" . $idPelanggan . "|" . $idMember . "|" . $ref1;
-        $signature = md5($stringToHash);
-
-        return $signature;
-    }
-
-    // Generate Reff
-    public function generateRef1()
-    {
-        $dateTime = new \DateTime();
-        $currentDateTime = $dateTime->format('mdHis');
-        $randomNumber = mt_rand(100, 999);
-
-        $ref1 = $currentDateTime . $randomNumber;
-
-        return $ref1;
-    }
-
 
     // Cek Saldo
     public function getBalance()
@@ -121,27 +84,29 @@ class ApiDataController extends Controller
         return $response;
     }
 
-    // Cetak Struk BELUM FIX
+    // Cetak Struk
     public function getStruk(Request $request)
     {
-        $token = $this->getJwtToken();
-        $time = $this->time();
-        $ref1 = $this->generateRef1();
+        $Generate = new GenerateController;
+        $token = $Generate->getJwtToken();
+        $time = $Generate->time();
+        $ref1 = $Generate->generateRef1();
 
         $clientKey = env('CLIENT_KEY');
         $idMember = env('ID_MEM');
+
         $method = LKMethod::InqBank;
         $kodeProduk = LKConstant::TFBank;
 
         // Mengambil nilai dari request pengguna
         $idPelanggan = $request->id_pelanggan;
-        $id_transaksi = $request->id_transaksi;
+        $id_transaksi = $request->id_transaksi_pay;
 
-        $signature = $this->generateSignature($clientKey, $method, $kodeProduk, $time, $idPelanggan, $idMember, $ref1);
+        $signature = $Generate->generateSignature($clientKey, $method, $kodeProduk, $time, $idPelanggan, $idMember, $ref1);
         $data = [
             'request' => LKConstant::Struk,
             'cetak_ulang' => '0',
-            'data' => json_encode([
+            'data' => [
                 "method" => LKMethod::PayCheck,
                 "id_transaksi_pay" => $id_transaksi,
                 "kode_produk" => LKConstant::TFBank,
@@ -150,11 +115,20 @@ class ApiDataController extends Controller
                 "id_member" => $idMember,
                 "signature" => $signature,
                 "ref1" => $ref1
-            ])
+            ]
         ];
 
         $url = env('LINKITA');
         $response = Helper::DataLinkita($url, $data, $token);
+
+        // Konversi base64 menjadi file PDF
+        $pdfBase64 = $response->pdf; // Menggunakan notasi objek
+        $pdfData = base64_decode($pdfBase64);
+        $fileName = 'struk.pdf'; // Nama file PDF yang akan disimpan
+        $filePath = public_path($fileName);
+
+        // Simpan file PDF
+        File::put($filePath, $pdfData);
 
         // Simpan Log
         $content = $response;
@@ -166,8 +140,12 @@ class ApiDataController extends Controller
         $log->signature = '0';
         $log->content = json_encode($response);
         $log->save();
-        return $response;
+
+        // Mengembalikan tautan untuk mengunduh atau melihat file PDF
+        $downloadLink = asset($fileName);
+        return response()->json(['Struk' => $downloadLink]);
     }
+
 
     // Get Url Widget
     public function getUrlWidget(Request $request)
