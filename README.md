@@ -18,6 +18,29 @@ Laravel LinkIta adalah package yang mengintegrasikan [LinkIta](https://www.linki
 - [PHP >= 8.1.6](http://php.net/)
 - [Laravel Framework](https://github.com/laravel/framework)
 
+## Laravel Version Compatibility
+
+| Laravel |
+
+| 9.x.x   |
+
+<h2 id="fitur">Fitur apa saja yang tersedia di LinkIta?</h2>
+
+-   Transfer Antar Bank
+-   TopUp Emoney
+-   Cek Data Bank
+-   Cek Saldo
+-   Cetak Struk
+-   Cek Transaksi
+
+<h2 id="testing-account">👤 Default Account for Testing</h2>
+
+#### Admin
+
+-   Username: alfianchii
+-   Password: password
+
+
 
 ## Instalasi
 
