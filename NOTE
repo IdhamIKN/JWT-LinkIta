@@ -1,0 +1,27 @@
+Untuk melakukan update hanya pada branch tertentu di repository Github.
+Contoh :
+Untuk melakukan update pada branch "coba", Anda dapat melakukan langkah-langkah berikut:
+
+Pastikan Anda berada pada branch "coba" di lokal dengan perintah ```git checkout coba```.
+Lakukan perubahan yang Anda inginkan di proyek Laravel Anda di lokal.
+Lakukan commit terhadap perubahan yang telah Anda lakukan dengan perintah ```git add .``` dan
+```git commit -m "pesan commit Anda"```.
+Lakukan push perubahan Anda ke branch "Tujuan" di repository Github dengan perintah ```git push origin coba ```.
+
+Jika Anda ingin mengambil perubahan terbaru yang dilakukan di branch "coba"
+di repository Github ke dalam proyek Laravel Anda di lokal,
+Anda dapat melakukan pull dengan perintah ```git pull origin coba```.
+
+
+* Untuk Nama Branch bisa diganti, disesuaikan dengan branch yang ingin di update
+
+
+
+Nyalakan Vpn BMD
+{
+	"username"	:	"team.itbmd@gmail.com",
+	"password"	:	"bmdsyariah2001"
+}
+
+format client key : AD7F18227088EE26A9CA03A05BBAAA2A
+	"id_member": "5454",
