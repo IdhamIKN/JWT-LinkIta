@@ -24,7 +24,7 @@ Laravel LinkIta adalah package yang mengintegrasikan [LinkIta](https://www.linki
 
 | 9.x.x   |
 
-<h2 id="fitur">Fitur apa saja yang tersedia di LinkIta?</h2>
+<h2 id="fitur">Fitur apa saja yang tersedia di package LinkIta?</h2>
 
 -   Transfer Antar Bank
 -   TopUp Emoney
@@ -33,24 +33,70 @@ Laravel LinkIta adalah package yang mengintegrasikan [LinkIta](https://www.linki
 -   Cetak Struk
 -   Cek Transaksi
 
-<h2 id="testing-account">👤 Default Account for Testing</h2>
+<h2 id="testing-account"> Default Account for Testing</h2>
 
 #### Admin
 
--   Username: alfianchii
+-   Email: admin@gmail.com
 -   Password: password
 
 
+<h2 id="download">💻 Install</h2>
 
-## Instalasi
+1. Clone repository
 
-Anda dapat menginstal package melalui composer:
-```
+```bash
 git clone https://github.com/IdhamIKN/JWT-LinkIta.git
 ```
+```
+cd JWT-LinkIta
+```
+```
+composer update
+```
+```
+copy .env.example .env
+```
+2. Konfigurasi database melalui `.env`
+
+```
+DB_PORT=3306
+DB_DATABASE=laravel
+DB_USERNAME=root
+DB_PASSWORD=
+```
+3. Migrasi dan symlinks
+
+```bash
+php artisan key:generate
+php artisan migrate --seed
+php artisan storage:link
+```
+4. Jalankan website
+
+```bash
+php artisan serve
+```
 
 
+<h2 id="dukungan">💌 Support Me</h2>
 
-## License
+<p>
+Kamu bisa mendukung aku di platform Trakteer! Dukungan kamu akan sangat berarti. Namun, dengan kamu memberikan <i>star</i> pada <i>project</i> ini juga sudah sangat cukup kok~!
+</p>
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+<a href="teer.id/ik n" target="_blank"><img id="wse-buttons-preview" src="https://cdn.trakteer.id/images/embed/trbtn-red-5.png" height="40" style="border:0px;height:40px;" alt="Trakteer Saya"></a>
+
+<h2 id="kontribusi">🤝 Contributing</h2>
+
+<p>
+<i>Contributions, issues and feature requests</i> sangat diapresiasi karena aplikasi ini jauh dari kata sempurna. Jangan ragu untuk melakukan <i>pull request</i> dan membuat perubahan pada <i>project</i> ini, yaaa!
+</p>
+
+<h2 id="lisensi">📝 License</h2>
+
+<p>LinkIta is open-sourced software licensed under the MIT license.</p>
+
+<h2 id="pembuat">🧍 Author</h2>
+
+<p>LinkIta s dibuat oleh <a href="https://instagram.com/idhamikn?igshid=MmJiY2I4NDBkZg==">IdhamIKn</a> .</p>
