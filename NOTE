@@ -1,16 +1,22 @@
-Untuk melakukan update hanya pada branch tertentu di repository Github.
-Contoh :
-Untuk melakukan update pada branch "coba", Anda dapat melakukan langkah-langkah berikut:
+Cara Update repo Github Berikut langkah-langkahnya:
 
-Pastikan Anda berada pada branch "coba" di lokal dengan perintah ```git checkout coba```.
-Lakukan perubahan yang Anda inginkan di proyek Laravel Anda di lokal.
-Lakukan commit terhadap perubahan yang telah Anda lakukan dengan perintah ```git add .``` dan
-```git commit -m "pesan commit Anda"```.
-Lakukan push perubahan Anda ke branch "Tujuan" di repository Github dengan perintah ```git push origin coba ```.
+Jalankan perintah berikut di terminal:
 
-Jika Anda ingin mengambil perubahan terbaru yang dilakukan di branch "coba"
-di repository Github ke dalam proyek Laravel Anda di lokal,
-Anda dapat melakukan pull dengan perintah ```git pull origin coba```.
+Copy code
+```git pull origin master```
+Jika ada konflik penggabungan, edit file-file yang terkena konflik untuk menyelesaikan konflik tersebut secara manual.
+
+Setelah konflik diselesaikan, jalankan perintah berikut untuk menambahkan perubahan ke commit:
+
+```git add .```
+Buat commit untuk perubahan yang telah diselesaikan:
+
+git commit -m "Update ..."
+Terakhir, lakukan push ke repositori GitHub:
+
+```git push origin master```
+
+Dengan melakukan git pull terlebih dahulu, Anda akan memperbarui repositori lokal Anda dengan perubahan terbaru dari repositori GitHub, sehingga menghindari konflik saat melakukan push.
 
 
 * Untuk Nama Branch bisa diganti, disesuaikan dengan branch yang ingin di update
