@@ -69,6 +69,20 @@ Route::middleware(['auth:api', 'auth.api'])->group(function () {
 
     Route::post('/inqemoneycheck', [App\Http\Controllers\Api\LinkIta\EmoneyController::class, 'emoneyInqAndCheckInq']);
     Route::post('/payemoneycheck', [App\Http\Controllers\Api\LinkIta\EmoneyController::class, 'emoneyPayAndCheckPay']);
+
+    //Get VA Inquiry
+    Route::post('/vainq', [App\Http\Controllers\Api\LinkIta\TransferController::class, 'vaInq']);
+    //Get VA Inquiry
+    Route::post('/vacheck', [App\Http\Controllers\Api\LinkIta\TransferController::class, 'vaCheck']);
+    //Get VA Inquiry + Check
+    Route::post('/inqvacheck', [App\Http\Controllers\Api\LinkIta\TransferController::class, 'vaInqAndCheckInq']);
+
+    //Get VA Pay
+    Route::post('/vapay', [App\Http\Controllers\Api\LinkIta\TransferController::class, 'vaPay']);
+    //Get VA Pay
+    Route::post('/checkva', [App\Http\Controllers\Api\LinkIta\TransferController::class, 'vacheckPay']);
+    //Get VA Pay + Check
+    Route::post('/payvacheck', [App\Http\Controllers\Api\LinkIta\TransferController::class, 'vaPayAndCheckPay']);
 });
 
 

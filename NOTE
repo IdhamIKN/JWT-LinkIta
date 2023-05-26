@@ -11,7 +11,7 @@ Setelah konflik diselesaikan, jalankan perintah berikut untuk menambahkan peruba
 ```git add .```
 Buat commit untuk perubahan yang telah diselesaikan:
 
-git commit -m "Update ..."
+```git commit -m "Update ..."```
 Terakhir, lakukan push ke repositori GitHub:
 
 ```git push origin master```

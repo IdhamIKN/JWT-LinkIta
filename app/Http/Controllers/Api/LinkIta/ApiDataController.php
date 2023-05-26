@@ -128,6 +128,7 @@ class ApiDataController extends Controller
         // Tampilkan data $struk dalam format yang diinginkan di dalam PDF
         $html = '';
         $html .= '<p style="text-align: justify;">TRANSAKSI: ' . $idtransaksi . '</p>';
+        // dd($idtransaksi);
         $html .= '<p style="text-align: justify;">WAKTU: ' . $struk->waktu . '</p>';
         $html .= '<p style="text-align: center; margin-top: 10px; margin-bottom: 20px;">STRUK TRANSFER UANG</p>';
         // Pisahkan string menggunakan tanda "-" dan ambil elemen pertama sebagai kode bank

@@ -14,6 +14,7 @@ class LKConstant extends PhpConstant
 
     // Produk
     public const TFBank = 'TRSFBANK';
+    public const VABank = 'TRANSFERVA';
     public const OVO = 'OVO';
     public const DANA = 'DANA';
     public const GOPAY = 'GOPAY';
