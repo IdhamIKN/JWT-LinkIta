@@ -79,7 +79,7 @@ php artisan serve
 ```
 
 
-<h2 id="dukungan">💌 Support Me</h2>
+<h2 id="[dukungan](https://saweria.co/idhamIKN)">💌 [Support Me](https://saweria.co/idhamIKN)</h2>
 
 <p>
 Kamu bisa mendukung aku di platform Trakteer! Dukungan kamu akan sangat berarti. Namun, dengan kamu memberikan <i>star</i> pada <i>project</i> ini juga sudah sangat cukup kok~!
