@@ -85,7 +85,7 @@ php artisan serve
 Kamu bisa mendukung aku di platform Trakteer! Dukungan kamu akan sangat berarti. Namun, dengan kamu memberikan <i>star</i> pada <i>project</i> ini juga sudah sangat cukup kok~!
 </p>
 
-<a href="https://saweria.co/idhamIKN" target="_blank"><img id="wse-buttons-preview" src="https://saweria.co/widgets/qr?streamKey=bf34f3df16e7933de1ac11444b7e92f6" height="40" style="border:0px;height:40px;" ></a>
+<a href="https://saweria.co/idhamIKN" target="_blank"><img id="wse-buttons-preview" src="https://images.app.goo.gl/CjZdzszhjMWjGa9p6" height="40" style="border:0px;height:40px;" ></a>
 
 <h2 id="kontribusi">🤝 Contributing</h2>
 
