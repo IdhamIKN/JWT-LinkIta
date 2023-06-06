@@ -3,6 +3,13 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Exceptions\JwtHandlerException;
+use App\Http\Controllers\Api\Member\MemberController;
+use App\Http\Controllers\Api\User\RegisterController;
+use App\Http\Controllers\Api\User\LoginController;
+use App\Http\Controllers\Api\User\LogoutController;
+use App\Http\Controllers\Api\LinkIta\ApiDataController;
+use App\Http\Controllers\Api\LinkIta\TransferController;
+use App\Http\Controllers\Api\LinkIta\EmoneyController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,13 +26,13 @@ use App\Exceptions\JwtHandlerException;
  * route "/register"
  * @method "POST"
  */
-Route::post('/register', App\Http\Controllers\Api\User\RegisterController::class)->name('register');
+Route::post('/register', RegisterController::class)->name('register');
 
 /**
  * route "/login"
  * @method "POST"
  */
-Route::post('/login', App\Http\Controllers\Api\User\LoginController::class)->name('login');
+Route::post('/login', LoginController::class)->name('login');
 
 // Middleware group for routes that require authentication
 Route::middleware(['auth:api', 'auth.api'])->group(function () {
@@ -38,57 +45,67 @@ Route::middleware(['auth:api', 'auth.api'])->group(function () {
     });
 
     //Get Saldo Transaksi
-    Route::post('/balance', [App\Http\Controllers\Api\LinkIta\ApiDataController::class, 'getBalance']);
+    Route::post('/balance', [ApiDataController::class, 'getBalance']);
     // Get Data Bank
-    Route::post('/bank', [App\Http\Controllers\Api\LinkIta\ApiDataController::class, 'getBank']);
+    Route::post('/bank', [ApiDataController::class, 'getBank']);
     //Cetak Struk
-    Route::post('/struk', [App\Http\Controllers\Api\LinkIta\ApiDataController::class, 'getStruk']);
+    Route::post('/struk', [ApiDataController::class, 'getStruk']);
     //Get Url Widget
-    Route::post('/widget', [App\Http\Controllers\Api\LinkIta\ApiDataController::class, 'getUrlWidget']);
+    Route::post('/widget', [ApiDataController::class, 'getUrlWidget']);
+    //Get Transaksi
+    Route::post('/trans', [ApiDataController::class, 'transaksi']);
+    //Get Transaksi
+    Route::post('/mutasi', [ApiDataController::class, 'mutasi']);
+
+
     //Get Transfer Inquiry
-    Route::post('/tfinq', [App\Http\Controllers\Api\LinkIta\TransferController::class, 'transferInq']);
+    Route::post('/tfinq', [TransferController::class, 'transferInq']);
     //Get Transfer Pay
-    Route::post('/tfpay', [App\Http\Controllers\Api\LinkIta\TransferController::class, 'transferPay']);
+    Route::post('/tfpay', [TransferController::class, 'transferPay']);
     //Get Check Inquiry
-    Route::post('/checkinq', [App\Http\Controllers\Api\LinkIta\TransferController::class, 'checkInq']);
+    Route::post('/checkinq', [TransferController::class, 'checkInq']);
     //Get Check Pay
-    Route::post('/checkpay', [App\Http\Controllers\Api\LinkIta\TransferController::class, 'checkPay']);
-
-    Route::post('/inqtransfercheck', [App\Http\Controllers\Api\LinkIta\TransferController::class, 'transferInqAndCheckInq']);
-    Route::post('/paytransfercheck', [App\Http\Controllers\Api\LinkIta\TransferController::class, 'transferPayAndCheckPay']);
-
+    Route::post('/checkpay', [TransferController::class, 'checkPay']);
+    //Get Transfer Inquiry and Check Inquiry
+    Route::post('/inqtransfercheck', [TransferController::class, 'transferInqAndCheckInq']);
+    //Get Transfer Pay and Check Pay
+    Route::post('/paytransfercheck', [TransferController::class, 'transferPayAndCheckPay']);
     // Emoney
     //Get Transfer Inquiry
-    Route::post('/moneyinq', [App\Http\Controllers\Api\LinkIta\EmoneyController::class, 'inqEmoney']);
+    Route::post('/moneyinq', [EmoneyController::class, 'inqEmoney']);
     //Get Transfer Pay
-    Route::post('/moneypay', [App\Http\Controllers\Api\LinkIta\EmoneyController::class, 'payEmoney']);
+    Route::post('/moneypay', [EmoneyController::class, 'payEmoney']);
     //Get Check Inquiry
-    Route::post('/inqmoney', [App\Http\Controllers\Api\LinkIta\EmoneyController::class, 'emoneyInq']);
+    Route::post('/inqmoney', [EmoneyController::class, 'emoneyInq']);
     //Get Check Pay
-    Route::post('/payemoney', [App\Http\Controllers\Api\LinkIta\EmoneyController::class, 'emoneyPay']);
-
-    Route::post('/inqemoneycheck', [App\Http\Controllers\Api\LinkIta\EmoneyController::class, 'emoneyInqAndCheckInq']);
-    Route::post('/payemoneycheck', [App\Http\Controllers\Api\LinkIta\EmoneyController::class, 'emoneyPayAndCheckPay']);
-
+    Route::post('/payemoney', [EmoneyController::class, 'emoneyPay']);
+    //Get Emoney Inquiry and Check Inquiry
+    Route::post('/inqemoneycheck', [EmoneyController::class, 'emoneyInqAndCheckInq']);
+    //Get Emoney Pay and Check Pay
+    Route::post('/payemoneycheck', [EmoneyController::class, 'emoneyPayAndCheckPay']);
     //Get VA Inquiry
-    Route::post('/vainq', [App\Http\Controllers\Api\LinkIta\TransferController::class, 'vaInq']);
-    //Get VA Inquiry
-    Route::post('/vacheck', [App\Http\Controllers\Api\LinkIta\TransferController::class, 'vaCheck']);
-    //Get VA Inquiry + Check
-    Route::post('/inqvacheck', [App\Http\Controllers\Api\LinkIta\TransferController::class, 'vaInqAndCheckInq']);
-
+    Route::post('/vainq', [TransferController::class, 'vaInq']);
+    //Get VA Check
+    Route::post('/vacheck', [TransferController::class, 'vaCheck']);
+    //Get VA Inquiry and Check Inquiry
+    Route::post('/inqvacheck', [TransferController::class, 'vaInqAndCheckInq']);
     //Get VA Pay
-    Route::post('/vapay', [App\Http\Controllers\Api\LinkIta\TransferController::class, 'vaPay']);
-    //Get VA Pay
-    Route::post('/checkva', [App\Http\Controllers\Api\LinkIta\TransferController::class, 'vacheckPay']);
-    //Get VA Pay + Check
-    Route::post('/payvacheck', [App\Http\Controllers\Api\LinkIta\TransferController::class, 'vaPayAndCheckPay']);
+    Route::post('/vapay', [TransferController::class, 'vaPay']);
+    //Get VA Pay Check
+    Route::post('/checkva', [TransferController::class, 'vacheckPay']);
+    //Get VA Pay and Check Pay
+    Route::post('/payvacheck', [TransferController::class, 'vaPayAndCheckPay']);
+    // MEMBER
+    // TopUp
+    Route::post('/topup', [MemberController::class, 'topUp'])->name('topUp');
+    // Verifikasi TopUp
+    Route::post('/verify', [MemberController::class, 'verifytopUp'])->name('verifytopUp');
+    // Verifikasi TopUp
+    Route::post('/cekbalance', [MemberController::class, 'checkBalance'])->name('checkBalance');
 });
-
-
 
 /**
  * route "/logout"
  * @method "POST"
  */
-Route::post('/logout', App\Http\Controllers\Api\User\LogoutController::class)->name('logout');
+Route::post('/logout', LogoutController::class)->name('logout');

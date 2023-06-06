@@ -20,7 +20,7 @@ class CreateLkLogsTable extends Migration
             $table->string('method')->nullable();
             $table->string('id_pay')->nullable();
             $table->string('id_inq')->nullable();
-            $table->string('nominal')->nullable();
+            $table->bigInteger('nominal')->nullable();
             $table->string('status')->nullable();
             $table->string('ket')->nullable();
             $table->text('content');

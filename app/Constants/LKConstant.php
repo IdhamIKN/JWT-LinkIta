@@ -11,6 +11,8 @@ class LKConstant extends PhpConstant
     public const Bank = 'bank';
     public const Struk = 'struk';
     public const Widget = 'url_widget';
+    public const Trans = 'transaksi';
+    public const Mutasi = 'mutasi';
 
     // Produk
     public const TFBank = 'TRSFBANK';

@@ -14,8 +14,11 @@ use App\Constants\LKMethod;
 use App\Constants\LKConstant;
 use App\Models\lk_log;
 use App\Http\Controllers\Api\LinkIta\GenerateController;
+use App\Http\Controllers\Api\LinkIta\ApiDataController;
+use App\Http\Controllers\Api\Member\MemberController;
 use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\Utils;
+use App\Models\mutasi;
 
 class TransferController extends Controller
 {
@@ -25,6 +28,8 @@ class TransferController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+
+    // INQ
     // Get Transfer Inquiry
     public function transferInq(Request $request)
     {
@@ -61,18 +66,7 @@ class TransferController extends Controller
 
         // Simpan Log
         $content = $response;
-
-        $log = new lk_log;
-        $log->customer_id = $content->id_pelanggan ?? 0;
-        $log->nama = $content->nama_pelanggan ?? 0;
-        $log->method = 'tf_inq';
-        $log->id_pay = $content->id_transaksi_pay ?? 0;
-        $log->id_inq = $content->id_transaksi_inq ?? 0;
-        $log->nominal = $content->$nominal ?? 0;
-        $log->status = $content->status ?? 0;
-        $log->ket =  $content->keterangan ?? 0;
-        $log->content = json_encode($response);
-        $log->save();
+        $log = $Generate->createLog($response, 'tf_inq');
 
         return $response;
     }
@@ -116,21 +110,11 @@ class TransferController extends Controller
 
         // Simpan Log
         $content = $response;
-
-        $log = new lk_log;
-        $log->customer_id = $content->id_pelanggan ?? 0;
-        $log->nama = $content->nama_pelanggan ?? 0;
-        $log->method = 'cek_inq';
-        $log->id_pay = $content->id_transaksi_pay ?? 0;
-        $log->id_inq = $content->id_transaksi_inq ?? 0;
-        $log->nominal = $content->nominal ?? 0;
-        $log->status = $content->status ?? 0;
-        $log->ket =  $content->keterangan ?? 0;
-        $log->content = json_encode($response);
-        $log->save();
+        $log =  $Generate->createLog($response, 'cek_inq');
         return $response;
     }
 
+    // Get Check Inq + Check
     public function transferInqAndCheckInq(Request $request)
     {
         $transferInqResponse = $this->transferInq($request);
@@ -170,59 +154,68 @@ class TransferController extends Controller
     }
 
 
-    // Get Transfer pay
+    // PAY
+    // Pay Transfer
     public function transferPay(Request $request)
     {
         $Generate = new GenerateController;
         $token = $Generate->getJwtToken();
         $time = $Generate->time();
         $ref1 = $Generate->generateRef1();
-
+        $user = auth()->guard('api')->user();
         $clientKey = env('CLIENT_KEY');
         $idMember = env('ID_MEM');
-
+        $MemberId = $user->id;
         $method = LKMethod::PayBank;
         $kodeProduk = LKConstant::TFBank;
-
-        // Mengambil nilai dari request pengguna
         $idPelanggan = $request->id_pelanggan;
         $nominal = $request->nominal;
         $idtransaksi = $request->idtransaksi;
-
-        // Generate Signature
+        $Balance = new ApiDataController;
+        $saldo = $Balance->getBalance();
+        $member = new MemberController;
+        $cash = $Balance->checkBalance();
         $signature = $Generate->generateSignature($clientKey, $method, $kodeProduk, $time, $idPelanggan, $idMember, $ref1);
 
         $data = [
-            'method'    =>    $method,
-            'kode_produk'    =>    $kodeProduk,
-            'waktu'    =>    $time,
-            'id_transaksi_inq'    =>    $idtransaksi,
-            'id_pelanggan'    =>    $idPelanggan,
-            'id_member'    => env('ID_MEM'),
-            'nominal'    =>    $nominal,
-            'signature'    =>    $signature,
-            'ref1'    =>    $ref1
+            'method' => $method,
+            'kode_produk' => $kodeProduk,
+            'waktu' => $time,
+            'id_transaksi_inq' => $idtransaksi,
+            'id_pelanggan' => $idPelanggan,
+            'id_member' => $idMember,
+            'nominal' => $nominal,
+            'signature' => $signature,
+            'ref1' => $ref1
         ];
 
         $url = env('LINKITA');
         $response = Helper::DataLinkita($url, $data, $token);
 
-        // Simpan Log
-        $content = $response;
+        $content = json_encode($response);
+        $log = $Generate->createLog1($content, 'tf_pay');
+        $mutasi = $Generate->mutasi($response, $nominal);
 
-        $log = new lk_log;
-        $log->customer_id = $content->id_pelanggan ?? 0;
-        $log->nama = $content->nama_pelanggan ?? 0;
-        $log->method = 'tf_pay';
-        $log->id_pay = $content->id_transaksi_pay ?? 0;
-        $log->id_inq = $content->id_transaksi_inq ?? 0;
-        $log->nominal = $content->nominal ?? 0;
-        $log->status = $content->status ?? 0;
-        $log->ket =  $content->keterangan ?? 0;
-        $log->content = json_encode($response);
-        $log->save();
+        if ($saldo->nominal >= $nominal) {
+            return $response;
+        } elseif ($user->nama_user === 'admin' && $cash->saldo_global >= $nominal) {
+            return $response;
+        } elseif ($user->nama_user === 'member') {
+            foreach ($cash->saldo as $saldo) {
+                if ($saldo->id_user == $MemberId && $saldo->saldo >= $nominal) {
+                    return $response;
+                }
+            }
+        }
+
+        sleep(3);
+        $response = $Generate->fail($idtransaksi, $nominal, $idPelanggan, $idMember, $ref1);
+        $logContent = json_encode($response);
+        $logController = new GenerateController;
+        $logController->createLog1($logContent, 'tf_pay');
         return $response;
     }
+
 
     // Get Check pay
     public function checkPay(Request $request)
@@ -257,28 +250,19 @@ class TransferController extends Controller
             'signature'    =>    $signature,
             'ref1'    =>    $ref1
         ];
+        // dd($data);
 
         $url = env('LINKITA');
         $response = Helper::DataLinkita($url, $data, $token);
 
         // Simpan Log
         $content = $response;
+        $log =  $Generate->createLog($response, 'check_pay');
 
-        $log = new lk_log;
-        $log->customer_id = $content->id_pelanggan ?? 0;
-        $log->nama = $content->nama_pelanggan ?? 0;
-        $log->method = 'cek_pay';
-        $log->id_pay = $content->id_transaksi_pay ?? 0;
-        $log->id_inq = $content->id_transaksi_inq ?? 0;
-        $log->nominal = $content->nominal ?? 0;
-        $log->status = $content->status ?? 0;
-        $log->ket =  $content->keterangan ?? 0;
-        $log->content = json_encode($response);
-        $log->save();
         return $response;
     }
 
-    // Get Inq + Check pay
+    // Get Pay + Check pay
     public function transferPayAndCheckPay(Request $request)
     {
         $transferPayResponse = $this->transferInq($request);
@@ -354,18 +338,7 @@ class TransferController extends Controller
 
         // Simpan Log
         $content = $response;
-
-        $log = new lk_log;
-        $log->customer_id = $content->id_pelanggan ?? 0;
-        $log->nama = $content->nama_pelanggan ?? 0;
-        $log->method = 'va_inq';
-        $log->id_pay = $content->id_transaksi_pay ?? 0;
-        $log->id_inq = $content->id_transaksi_inq ?? 0;
-        $log->nominal = $content->nominal ?? 0;
-        $log->status = $content->status ?? 0;
-        $log->ket =  $content->keterangan ?? 0;
-        $log->content = json_encode($response);
-        $log->save();
+        $log =  $Generate->createLog($response, 'va_inq');
 
         return $response;
     }
@@ -408,18 +381,7 @@ class TransferController extends Controller
 
         // Simpan Log
         $content = $response;
-
-        $log = new lk_log;
-        $log->customer_id = $content->id_pelanggan ?? 0;
-        $log->nama = $content->nama_pelanggan ?? 0;
-        $log->method = 'va_check';
-        $log->id_pay = $content->id_transaksi_pay ?? 0;
-        $log->id_inq = $content->id_transaksi_inq ?? 0;
-        $log->nominal = $content->nominal ?? 0;
-        $log->status = $content->status ?? 0;
-        $log->ket =  $content->keterangan ?? 0;
-        $log->content = json_encode($response);
-        $log->save();
+        $log =  $Generate->createLog($response, 'va_check');
 
         return $response;
     }
@@ -471,6 +433,7 @@ class TransferController extends Controller
         $token = $Generate->getJwtToken();
         $time = $Generate->time();
         $ref1 = $Generate->generateRef1();
+        $user = auth()->guard('api')->user();
 
         $clientKey = env('CLIENT_KEY');
         $idMember = env('ID_MEM');
@@ -502,19 +465,19 @@ class TransferController extends Controller
         $response = Helper::DataLinkita($url, $data, $token);
 
         // Simpan Log
-        $content = $response;
+        $content = json_encode($response);
+        $log = $Generate->createLog($content, 'tf_pay');
+        // Jika transferPay berhasil
+        $mutasi = Mutasi::create([
+            'id_user' => $user->id,
+            'id_transaksi' => $response->id_transaksi_pay,
+            'jenis_transaksi' => 'Transaksi',
+            'status' => 'Sukses',
+            'tanggal' => now(),
+            'debit' => $nominal,
+            'kredit' => 0
+        ]);
 
-        $log = new lk_log;
-        $log->customer_id = $content->id_pelanggan ?? 0;
-        $log->nama = $content->nama_pelanggan ?? 0;
-        $log->method = 'VA_pay';
-        $log->id_pay = $content->id_transaksi_pay ?? 0;
-        $log->id_inq = $content->id_transaksi_inq ?? 0;
-        $log->nominal = $content->nominal ?? 0;
-        $log->status = $content->status ?? 0;
-        $log->ket =  $content->keterangan ?? 0;
-        $log->content = json_encode($response);
-        $log->save();
         return $response;
     }
 
@@ -557,18 +520,8 @@ class TransferController extends Controller
 
         // Simpan Log
         $content = $response;
+        $log = $this->createLog($response, 'va_check_pay');
 
-        $log = new lk_log;
-        $log->customer_id = $content->id_pelanggan ?? 0;
-        $log->nama = $content->nama_pelanggan ?? 0;
-        $log->method = 'VA_cek_pay';
-        $log->id_pay = $content->id_transaksi_pay ?? 0;
-        $log->id_inq = $content->id_transaksi_inq ?? 0;
-        $log->nominal = $content->nominal ?? 0;
-        $log->status = $content->status ?? 0;
-        $log->ket =  $content->keterangan ?? 0;
-        $log->content = json_encode($response);
-        $log->save();
         return $response;
     }
 
@@ -611,3 +564,6 @@ class TransferController extends Controller
         }
     }
 }
+
+
+ 

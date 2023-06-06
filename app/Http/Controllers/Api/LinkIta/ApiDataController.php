@@ -17,6 +17,8 @@ use App\Models\lk_log;
 use App\Http\Controllers\Api\LinkIta\TransferController;
 use Dompdf\Dompdf;
 use TCPDF;
+use App\Models\mutasi;
+use Illuminate\Support\Facades\DB;
 
 
 
@@ -48,20 +50,14 @@ class ApiDataController extends Controller
         // Simpan Log
         $content = $response;
 
-        $log = new lk_log;
-        $log->customer_id = '001';
-        $log->status = 'Check Saldo';
-        $log->ket = 'Check Saldo';
-        $log->content = json_encode($response);
-        $log->save();
+        // $log = new lk_log;
+        // $log->customer_id = '001';
+        // $log->status = 'Check Saldo';
+        // $log->ket = 'Check Saldo';
+        // $log->content = json_encode($response);
+        // $log->save();
 
-        // return $response;
-        $output = "Jenis Saldo: {$response->jenis}\n";
-        $output .= "Nominal: {$response->nominal}\n";
-        $output .= "Status: {$response->status}\n";
-        $output .= "Keterangan: {$response->keterangan}\n";
-
-        return $output;
+        return $response;
     }
 
     // Get Data Bank
@@ -194,9 +190,131 @@ class ApiDataController extends Controller
         $log->customer_id = '003';
         $log->status = 'Get Widget';
         $log->ket = 'Get Widget';
-        $log->signature = '0';
         $log->content = json_encode($response);
         $log->save();
         return $response;
+    }
+
+    // Get Transaksi
+    public function transaksi(Request $request)
+    {
+        $Generate = new GenerateController;
+        $token = $Generate->getJwtToken();
+
+        $idMember = env('ID_MEM');
+
+        // Mengambil nilai dari request pengguna
+        $idTransaksi = $request->id_transaksi;
+        $idPelanggan = $request->id_pelanggan;
+        $status = $request->status;
+        $page = $request->page;
+        $start_date = $request->start_date;
+        $end_date = $request->end_date;
+        $data = [
+            'request' => LKConstant::Trans,
+            'id_member' => $idMember,
+            'id_transaksi' => $idTransaksi,
+            'id_pelanggan' => $idPelanggan,
+            'status' => $status,
+            'page' => $page,
+            'start_date' => $start_date,
+            'end_date' => $end_date,
+        ];
+
+        $url = env('LINKITA');
+        $response = Helper::DataLinkita($url, $data, $token);
+
+        // Simpan Log
+        $content = $response;
+
+        $log = new lk_log;
+        $log->customer_id = '004';
+        $log->status = 'Get Transaksi';
+        $log->ket = 'Get Transaksi';
+        $log->content = json_encode($response);
+        $log->save();
+
+        return $response;
+    }
+
+    // Get Transaksi
+    public function mutasi(Request $request)
+    {
+        $Generate = new GenerateController;
+        $token = $Generate->getJwtToken();
+
+        $idMember = env('ID_MEM');
+
+        // Mengambil nilai dari request pengguna
+        $idTransaksi = $request->id_transaksi;
+        $idPelanggan = $request->id_pelanggan;
+        $status = $request->status;
+        $page = $request->page;
+        $start_date = $request->start_date;
+        $end_date = $request->end_date;
+        $data = [
+            'request' => LKConstant::Mutasi,
+            'id_member' => $idMember,
+            'id_transaksi' => $idTransaksi,
+            'id_pelanggan' => $idPelanggan,
+            'status' => $status,
+            'page' => $page,
+            'start_date' => $start_date,
+            'end_date' => $end_date,
+        ];
+
+        $url = env('LINKITA');
+        $response = Helper::DataLinkita($url, $data, $token);
+
+        // Simpan Log
+        $content = $response;
+
+        $log = new lk_log;
+        $log->customer_id = '005';
+        $log->status = 'Get Mutasi';
+        $log->ket = 'Get Mutasi';
+        $log->content = json_encode($response);
+        $log->save();
+
+        return $response;
+    }
+
+    public function checkBalance()
+    {
+        $user = auth()->guard('api')->user();
+
+        if ($user->role == 1) {
+            $Balance = new ApiDataController;
+            $cash = $Balance->getBalance();
+
+            // Jika user admin, tampilkan semua data saldo member
+            $saldo = Mutasi::select('id_user', DB::raw('SUM(kredit - debit) AS saldo'))
+                ->groupBy('id_user')
+                ->get();
+
+            return response()->json([
+
+                'success' => true,
+                'nama_user' => $user->name,
+                'saldo global' => $cash->nominal,
+                'saldo' => $saldo
+            ], 200);
+        } elseif ($user->role == 2) {
+            // Jika user member, tampilkan saldo berdasarkan ID user
+            $saldo = Mutasi::select(DB::raw('SUM(kredit - debit) AS saldo'))
+                ->where('id_user', $user->id)
+                ->first();
+
+            return response()->json([
+                'success' => true,
+                'nama_user' => $user->name,
+                'saldo' => $saldo->saldo
+            ], 200);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki izin untuk melakukan pengecekan saldo.'
+            ], 403);
+        }
     }
 }
