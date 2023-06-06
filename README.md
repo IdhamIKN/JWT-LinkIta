@@ -79,13 +79,13 @@ php artisan serve
 ```
 
 
-<h2 id="[dukungan](https://saweria.co/idhamIKN)">💌 [Support Me](https://saweria.co/idhamIKN)</h2>
+<h2 id="[dukungan](https://saweria.co/idhamIKN)">💌 [Support Me]</h2>
 
 <p>
 Kamu bisa mendukung aku di platform Trakteer! Dukungan kamu akan sangat berarti. Namun, dengan kamu memberikan <i>star</i> pada <i>project</i> ini juga sudah sangat cukup kok~!
 </p>
 
-<a href="https://saweria.co/idhamIKN" target="_blank"><img id="wse-buttons-preview" src="https://images.app.goo.gl/CjZdzszhjMWjGa9p6" height="40" style="border:0px;height:40px;" ></a>
+<a href="https://saweria.co/idhamIKN" target="_blank"><img id="wse-buttons-preview" src="💌 [Support Me]" height="40" style="border:0px;height:40px;" alt="💌 [Support Me]" ></a>
 
 <h2 id="kontribusi">🤝 Contributing</h2>
 
