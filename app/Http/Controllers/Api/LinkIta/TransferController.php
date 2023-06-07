@@ -216,7 +216,6 @@ class TransferController extends Controller
         return $response;
     }
 
-
     // Get Check pay
     public function checkPay(Request $request)
     {
@@ -250,7 +249,6 @@ class TransferController extends Controller
             'signature'    =>    $signature,
             'ref1'    =>    $ref1
         ];
-        // dd($data);
 
         $url = env('LINKITA');
         $response = Helper::DataLinkita($url, $data, $token);
@@ -446,40 +444,51 @@ class TransferController extends Controller
         $nominal = $request->nominal;
         $idtransaksi = $request->idtransaksi;
 
-        // Generate Signature
+        // Validasi saldo user
+        $Balance = new ApiDataController;
+        $saldo = $Balance->getBalance();
+        $member = new MemberController;
+        $cash = $Balance->checkBalance();
         $signature = $Generate->generateSignature($clientKey, $method, $kodeProduk, $time, $idPelanggan, $idMember, $ref1);
-        $kodeProduk .= substr($idPelanggan, 0, 3);
+
         $data = [
-            'method'    =>    $method,
-            'kode_produk'    =>    $kodeProduk,
-            'waktu'    =>    $time,
-            'id_transaksi_inq'    =>    $idtransaksi,
-            'id_pelanggan'    =>    $idPelanggan,
-            'id_member'    => env('ID_MEM'),
-            'nominal'    =>    $nominal,
-            'signature'    =>    $signature,
-            'ref1'    =>    $ref1
+            'method' => $method,
+            'kode_produk' => $kodeProduk,
+            'waktu' => $time,
+            'id_transaksi_inq' => $idtransaksi,
+            'id_pelanggan' => $idPelanggan,
+            'id_member' => $idMember,
+            'nominal' => $nominal,
+            'signature' => $signature,
+            'ref1' => $ref1
         ];
 
         $url = env('LINKITA');
         $response = Helper::DataLinkita($url, $data, $token);
-
-        // Simpan Log
         $content = json_encode($response);
-        $log = $Generate->createLog($content, 'tf_pay');
-        // Jika transferPay berhasil
-        $mutasi = Mutasi::create([
-            'id_user' => $user->id,
-            'id_transaksi' => $response->id_transaksi_pay,
-            'jenis_transaksi' => 'Transaksi',
-            'status' => 'Sukses',
-            'tanggal' => now(),
-            'debit' => $nominal,
-            'kredit' => 0
-        ]);
+        $log = $Generate->createLog1($content, 'Va_pay');
+        $mutasi = $Generate->mutasi($response, $nominal);
 
+        if ($saldo->nominal >= $nominal) {
+            return $response;
+        } elseif ($user->nama_user === 'admin' && $cash->saldo_global >= $nominal) {
+            return $response;
+        } elseif ($user->nama_user === 'member') {
+            foreach ($cash->saldo as $saldo) {
+                if ($saldo->id_user == $MemberId && $saldo->saldo >= $nominal) {
+                    return $response;
+                }
+            }
+        }
+
+        sleep(3);
+        $response = $Generate->fail($idtransaksi, $nominal, $idPelanggan, $idMember, $ref1);
+        $logContent = json_encode($response);
+        $logController = new GenerateController;
+        $logController->createLog1($logContent, 'tf_pay');
         return $response;
     }
+
 
     // Get Check pay
     public function vacheckPay(Request $request)
@@ -564,6 +573,3 @@ class TransferController extends Controller
         }
     }
 }
-
-
- 
