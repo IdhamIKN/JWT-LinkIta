@@ -14,15 +14,38 @@ class LKConstant extends PhpConstant
     public const Trans = 'transaksi';
     public const Mutasi = 'mutasi';
 
-    // Produk
+    // Produk Transfer
     public const TFBank = 'TRSFBANK';
     public const VABank = 'TRANSFERVA';
+
+    // Produk Ewallet
     public const OVO = 'OVO';
     public const DANA = 'DANA';
     public const GOPAY = 'GOPAY';
     public const KASPRO = 'KASPRO';
     public const LINKAJA = 'LINKAJA';
     public const SHOPEEPAY = 'SHOPEEPAY';
+
+    // Produk PLN
+    public const PLNPB = 'PLNPASCA';
+    public const PLNNON = 'PLNNONTAG';
+    public const PLNPRA = 'PLNPRA';
+
+    // Produk Asuransi
+    public const BPJS = 'BPJSKES';
+    public const BPJSK = 'BPJSKET';
+
+    // Produk
+    // public const  = '';
+
+    // Produk
+    // public const  = '';
+
+    // Produk
+    // public const  = '';
+
+    // Produk
+    // public const  = '';
 
     public static function nominal(): array
     {

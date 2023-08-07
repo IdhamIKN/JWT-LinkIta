@@ -14,6 +14,7 @@ use App\Constants\LKMethod;
 use App\Constants\LKConstant;
 use App\Models\lk_log;
 use App\Http\Controllers\Api\LinkIta\GenerateController;
+use App\Http\Controllers\Api\Member\MemberController;
 
 class EmoneyController extends Controller
 {
@@ -24,7 +25,7 @@ class EmoneyController extends Controller
      * @return \Illuminate\Http\Response
      */
     // Get Transfer Inquiry
-    public function inqEmoney(Request $request)
+    public function Inq(Request $request)
     {
         $Generate = new GenerateController;
         $token = $Generate->getJwtToken();
@@ -32,14 +33,14 @@ class EmoneyController extends Controller
         $ref1 = $Generate->generateRef1();
 
         $clientKey = env('CLIENT_KEY');
-        $idMember = env('ID_MEM');
+        $idMember = env('Member');
 
         $method = LKMethod::InqEmoney;
 
         // Mengambil nilai dari request pengguna
         $idPelanggan = $request->id_pelanggan;
         $nominal = $request->nominal;
-        $kodeProduk = $request->kode_produk;
+        $kodeProduk = $request->kodeProduk;
 
         $signature = $Generate->generateSignature($clientKey, $method, $kodeProduk, $time, $idPelanggan, $idMember, $ref1);
 
@@ -59,20 +60,13 @@ class EmoneyController extends Controller
 
         // Simpan Log
         $content = $response;
-
-        $log = new lk_log;
-        $log->customer_id = $content->id_pelanggan ?? 0;
-        $log->status = $content->status ?? 0;
-        $log->ket =  $content->keterangan ?? 0;
-        $log->signature = $signature;
-        $log->content = json_encode($response);
-        $log->save();
+        $log = $Generate->createLog($response);
 
         return $response;
     }
 
     // Get Check Inq
-    public function emoneyInq(Request $request)
+    public function CInq(Request $request)
     {
         $Generate = new GenerateController;
         $token = $Generate->getJwtToken();
@@ -89,7 +83,7 @@ class EmoneyController extends Controller
         $idPelanggan = $request->id_pelanggan;
         $nominal = $request->nominal;
         $idtransaksi = $request->idtransaksi;
-        $kodeProduk = $request->kode_produk;
+        $kodeProduk = $request->kodeProduk;
 
         // Generate Signature
         $signature = $Generate->generateSignature($clientKey, $method, $kodeProduk, $time, $idPelanggan, $idMember, $ref1);
@@ -100,53 +94,52 @@ class EmoneyController extends Controller
             'kode_produk' => $kodeProduk,
             'waktu' => $time,
             'id_pelanggan' => $idPelanggan,
-            'id_member' => env('ID_MEM'),
+            'id_member' => $idMember,
             'signature' => $signature,
             'ref1' => $ref1
         ];
-
 
         $url = env('LINKITA');
         $response = Helper::DataLinkita($url, $data, $token);
 
         // Simpan Log
         $content = $response;
-
-        $log = new lk_log;
-        $log->customer_id = $content->id_pelanggan ?? 0;
-        $log->status = $content->status ?? 0;
-        $log->ket =  $content->keterangan ?? 0;
-        $log->signature = $signature;
-        $log->content = json_encode($response);
-        $log->save();
+        $log = $Generate->createLog($response);
         return $response;
     }
 
-    public function emoneyInqAndCheckInq(Request $request)
+    public function CheckInq(Request $request)
     {
-        $emoneyInqResponse = $this->inqEmoney($request);
-        $emoneyInqContent = $emoneyInqResponse;
+
+        $user = auth()->guard('api')->user();
+        $MemberId = $user->id;
+        // dd($MemberId);
+        $transferInqResponse = $this->Inq($request);
+        $transferInqContent = $transferInqResponse;
         $Generate = new GenerateController;
         // Ambil nilai yang diperlukan dari transferInqResponse jika perlu
-        $idtransaksi = $emoneyInqContent->id_transaksi_inq ?? null; // Menggunakan akses yang sesuai ke properti id_transaksi_inq
+        $idtransaksi = $transferInqContent->id_transaksi_inq ?? null; // Menggunakan akses yang sesuai ke properti id_transaksi_inq
 
         if ($idtransaksi) {
-        // Tunda eksekusi selama 3 detik
-        sleep(3);
+            // Tunda eksekusi selama 3 detik
+            sleep(3);
             // Panggil fungsi checkInq dengan idtransaksi yang didapatkan
             $checkInqRequest = $request;
             $checkInqRequest->merge(['idtransaksi' => $idtransaksi]); // Tambahkan idtransaksi ke request checkInq
-            $checkInqResponse = $this->emoneyInq($checkInqRequest);
+            $checkInqResponse = $this->CInq($checkInqRequest);
             $checkInqContent = $checkInqResponse;
-
-            // Ambil nilai yang diperlukan dari checkInqResponse jika perlu
 
             // Simpan log jika perlu
             $log = new lk_log;
+            $log->id_user = $MemberId;
             $log->customer_id = $checkInqContent->id_pelanggan ?? 0;
+            $log->nama = $checkInqContent->nama_pelanggan ?? 0;
+            $log->method = $checkInqContent->method ?? 0;
+            $log->id_pay = $checkInqContent->id_transaksi_pay ?? 0;
+            $log->id_inq = $checkInqContent->id_transaksi_inq ?? 0;
+            $log->nominal = isset($checkInqContent->nominal) && is_numeric($checkInqContent->nominal) ? $checkInqContent->nominal : 0;
             $log->status = $checkInqContent->status ?? 0;
-            $log->ket = $checkInqContent->keterangan ?? 0;
-            $log->signature = $Generate->generateSignature(env('CLIENT_KEY'), LKMethod::EmoneyInq, $checkInqRequest->kodeProduk, date('Y-m-d H:i:s'), $checkInqRequest->id_pelanggan, env('ID_MEM'), $Generate->generateRef1());
+            $log->ket =  $checkInqContent->keterangan ?? 0;
             $log->content = json_encode($checkInqResponse);
             $log->save();
 
@@ -159,57 +152,78 @@ class EmoneyController extends Controller
     }
 
     // Get Transfer pay
-    public function payEmoney(Request $request)
+    public function Pay(Request $request)
     {
+        $user = auth()->guard('api')->user();
+        $MemberId = $user->id;
+
         $Generate = new GenerateController;
         $token = $Generate->getJwtToken();
         $time = $Generate->time();
         $ref1 = $Generate->generateRef1();
+        // Notif Saldo GLobal
+        $saldo = (new ApiDataController)->getBalance();
 
         $clientKey = env('CLIENT_KEY');
         $idMember = env('ID_MEM');
 
         $method = LKMethod::PayEmoney;
+        $kodeProduk = LKConstant::TFBank;
 
-        // Mengambil nilai dari request pengguna
         $idPelanggan = $request->id_pelanggan;
         $nominal = $request->nominal;
         $idtransaksi = $request->idtransaksi;
-        $kodeProduk = $request->kode_produk;
 
-        // Generate Signature
+        // Cek saldo user
+        $cash = (new MemberController)->checkBalance();
+
         $signature = $Generate->generateSignature($clientKey, $method, $kodeProduk, $time, $idPelanggan, $idMember, $ref1);
 
         $data = [
-            'method'    =>    $method,
-            'kode_produk'    =>    $kodeProduk,
-            'waktu'    =>    $time,
-            'id_transaksi_inq'    =>    $idtransaksi,
-            'id_pelanggan'    =>    $idPelanggan,
-            'id_member'    => env('ID_MEM'),
-            'nominal'    =>    $nominal,
-            'signature'    =>    $signature,
-            'ref1'    =>    '123'
+            'method' => $method,
+            'kode_produk' => $kodeProduk,
+            'waktu' => $time,
+            'id_transaksi_inq' => $idtransaksi,
+            'id_pelanggan' => $idPelanggan,
+            'id_member' => $idMember,
+            'nominal' => $nominal,
+            'signature' => $signature,
+            'ref1' => $ref1
         ];
 
-        $url = env('LINKITA');
+        // $url = env('LINKITA');
+        $url = env('SANDBOX');
         $response = Helper::DataLinkita($url, $data, $token);
 
-        // Simpan Log
-        $content = $response;
+        $content = json_encode($response);
+        $log = $Generate->createLog1($content);
+        $allowedStatuses = [1, 2, 6, 9, 13];
+        $balanceResponse = $cash->getData(); // Get the JSON response data from the JsonResponse instance
 
-        $log = new lk_log;
-        $log->customer_id = $content->id_pelanggan ?? 0;
-        $log->status = $content->status ?? 0;
-        $log->ket =  $content->keterangan ?? 0;
-        $log->signature = $signature;
-        $log->content = json_encode($response);
-        $log->save();
+        if ($balanceResponse->saldo < 0 || in_array($response->status, $allowedStatuses)) {
+            $mutasi = $Generate->mutasi($response, $nominal);
+        }
+
+        if ($saldo->nominal >= $nominal || ($user->nama_user === 'admin' && $cash->saldo_global >= $nominal)) {
+            return $response;
+        } elseif ($user->nama_user === 'member') {
+            foreach ($cash->saldo as $saldo) {
+                if ($saldo->id_user == $MemberId && $saldo->saldo >= $nominal) {
+                    return $response;
+                }
+            }
+        }
+
+        sleep(3);
+        $response = $Generate->fail($idtransaksi, $nominal, $idPelanggan, $idMember, $ref1);
+        $logContent = json_encode($response);
+        $logController = new GenerateController;
+        $logController->createLog1($logContent);
         return $response;
     }
 
     // Get Check pay
-    public function emoneyPay(Request $request)
+    public function CPay(Request $request)
     {
         $Generate = new GenerateController;
         $token = $Generate->getJwtToken();
@@ -247,42 +261,42 @@ class EmoneyController extends Controller
 
         // Simpan Log
         $content = $response;
+        $log =  $Generate->createLog($response);
 
-        $log = new lk_log;
-        $log->customer_id = $content->id_pelanggan ?? 0;
-        $log->status = $content->status ?? 0;
-        $log->ket =  $content->keterangan ?? 0;
-        $log->signature = $signature;
-        $log->content = json_encode($response);
-        $log->save();
         return $response;
     }
 
-    public function emoneyPayAndCheckPay(Request $request)
+    // Get Pay + Check pay
+    public function CheckPay(Request $request)
     {
-        $emoneyPayResponse = $this->payEmoney($request);
-        $emoneyPayContent = $emoneyPayResponse;
+        $user = auth()->guard('api')->user();
+        $MemberId = $user->id;
+        $transferPayResponse = $this->Inq($request);
+        $transferPayContent = $transferPayResponse;
         $Generate = new GenerateController;
         // Ambil nilai yang diperlukan dari transferInqResponse jika perlu
-        $idtransaksi = $emoneyPayContent->id_transaksi_inq ?? null; // Menggunakan akses yang sesuai ke properti id_transaksi_inq
+        $idtransaksi = $transferPayContent->id_transaksi_inq ?? null; // Menggunakan akses yang sesuai ke properti id_transaksi_inq
 
         if ($idtransaksi) {
-        // Tunda eksekusi selama 3 detik
-        sleep(3);
+            // Tunda eksekusi selama 3 detik
+            sleep(3);
             // Panggil fungsi checkInq dengan idtransaksi yang didapatkan
             $checkPayRequest = $request;
             $checkPayRequest->merge(['idtransaksi' => $idtransaksi]); // Tambahkan idtransaksi ke request checkInq
-            $checkPayResponse = $this->emoneyPay($checkPayRequest);
+            $checkPayResponse = $this->CPay($checkPayRequest);
             $checkPayContent = $checkPayResponse;
-
-            // Ambil nilai yang diperlukan dari checkInqResponse jika perlu
 
             // Simpan log jika perlu
             $log = new lk_log;
+            $log->id_user = $MemberId;
             $log->customer_id = $checkPayContent->id_pelanggan ?? 0;
+            $log->nama = $checkPayContent->nama_pelanggan ?? 0;
+            $log->method = $checkPayContent->method ?? 0;
+            $log->id_pay = $checkPayContent->id_transaksi_pay ?? 0;
+            $log->id_inq = $checkPayContent->id_transaksi_inq ?? 0;
+            $log->nominal = isset($checkPayContent->nominal) && is_numeric($checkPayContent->nominal) ? $checkPayContent->nominal : 0;
             $log->status = $checkPayContent->status ?? 0;
-            $log->ket = $checkPayContent->keterangan ?? 0;
-            $log->signature = $Generate->generateSignature(env('CLIENT_KEY'), LKMethod::EmoneyPay, $checkPayRequest->kodeProduk, date('Y-m-d H:i:s'), $checkPayRequest->id_pelanggan, env('ID_MEM'), $Generate->generateRef1());
+            $log->ket =  $checkPayContent->keterangan ?? 0;
             $log->content = json_encode($checkPayResponse);
             $log->save();
 
@@ -293,5 +307,4 @@ class EmoneyController extends Controller
             ], 400);
         }
     }
-
 }

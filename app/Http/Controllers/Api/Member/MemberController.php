@@ -176,7 +176,8 @@ class MemberController extends Controller
             return response()->json([
                 'success' => true,
                 'nama_user' => $user->name,
-                'saldo' => $saldo->saldo
+                'saldo' => $saldo->saldo ?? 0
+                // 'saldo' => '999999999999'
             ], 200);
         } else {
             return response()->json([

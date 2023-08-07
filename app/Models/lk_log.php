@@ -11,6 +11,7 @@ class lk_log extends Model
 
     protected $fillable = [
         'id',
+        'id_user',
         'id_pel',
         'nama',
         'method',

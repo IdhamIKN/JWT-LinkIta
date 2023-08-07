@@ -37,6 +37,18 @@ class GenerateController extends Controller
         }
     }
 
+    // Ambil User
+    public function getUser()
+    {
+        $user = auth()->guard('api')->user();
+
+        if ($user) {
+            return $user->id;
+        } else {
+            return null; // Mengembalikan null jika tidak dapat mengambil data user
+        }
+    }
+
     // Ambil Waktu
     public function time()
     {
@@ -67,41 +79,89 @@ class GenerateController extends Controller
 
 
     // Create Lk_log
-    public function createLog($content, $method)
+    public function createLog($content)
     {
-        $log = new lk_log;
-        $log->customer_id = $content->id_pelanggan ?? 0;
-        $log->nama = $content->nama_pelanggan ?? '';
-        $log->method = $method;
-        $log->id_pay = $content->id_transaksi_pay ?? '';
-        $log->id_inq = $content->id_transaksi_inq ?? '';
-        $log->nominal = isset($content->nominal) && is_numeric($content->nominal) ? $content->nominal : 0;
-        $log->status = $content->status ?? 0;
-        $log->ket = $content->keterangan ?? '';
-        $log->content = json_encode($content);
-        $log->save();
+        // dd($content);
+        // Mengambil data user dengan fungsi getUser()
+        $user_id = $this->getUser();
+        // Cek apakah pengambilan data user berhasil
+        if ($user_id !== null) {
+            $log = new lk_log;
 
-        return $log;
+            $log->id_user = $user_id;
+            $log->customer_id = $content->id_pelanggan ?? 0;
+            $log->nama = $content->nama_pelanggan ?? '';
+            $log->method = $content->method?? '';
+            $log->id_pay = $content->id_transaksi_pay ?? '';
+            $log->id_inq = $content->id_transaksi_inq ?? '';
+            $log->nominal = isset($content->nominal) && is_numeric($content->nominal) ? $content->nominal : 0;
+            $log->status = $content->status ?? 0;
+            $log->ket = $content->keterangan ?? '';
+            $log->content = json_encode($content);
+            $log->save();
+
+            return $log;
+        } else {
+
+            return response()->json(['message' => 'Gagal mengambil data user'], 500);
+        }
+    }
+
+    // Create Lk_log
+    public function createLogP($content)
+    {
+        // Mengambil data user dengan fungsi getUser()
+        $user_id = $this->getUser();
+
+        // Cek apakah pengambilan data user berhasil
+        if ($user_id !== null) {
+            $log = new lk_log;
+
+            $log->id_user = $user_id;
+            $log->customer_id = $content->id_pelanggan ?? 0;
+            $log->nama = $content->nama_pelanggan ?? '';
+            $log->method = $content->method;
+            $log->id_pay = $content->id_transaksi_pay ?? '';
+            $log->id_inq = $content->id_transaksi_inq ?? '';
+            $log->nominal = isset($content->total_bayar) && is_numeric($content->total_bayar) ? $content->total_bayar : 0;
+            $log->status = $content->status ?? 0;
+            $log->ket = $content->keterangan ?? '';
+            $log->content = json_encode($content);
+            $log->save();
+
+            return $log;
+        } else {
+
+            return response()->json(['message' => 'Gagal mengambil data user'], 500);
+        }
     }
 
     // Create Lk_log1
-    public function createLog1($content, $method)
+    public function createLog1($content)
     {
         $contentObj = json_decode($content);
+        // Mengambil data user dengan fungsi getUser()
+        $user_id = $this->getUser();
+        // Cek apakah pengambilan data user berhasil
+        if ($user_id !== null) {
 
-        $log = new lk_log;
-        $log->customer_id = $contentObj->id_pelanggan ?? 0;
-        $log->nama = $contentObj->nama_pelanggan ?? '';
-        $log->method = $method;
-        $log->id_pay = $contentObj->id_transaksi_pay ?? '';
-        $log->id_inq = $contentObj->id_transaksi_inq ?? '';
-        $log->nominal = isset($contentObj->nominal) && is_numeric($contentObj->nominal) ? $contentObj->nominal : 0;
-        $log->status = $contentObj->status ?? 0;
-        $log->ket = $contentObj->keterangan ?? '';
-        $log->content = $content;
-        $log->save();
+            $log = new lk_log;
+            $log->id_user = $user_id;
+            $log->customer_id = $contentObj->id_pelanggan ?? 0;
+            $log->nama = $contentObj->nama_pelanggan ?? '';
+            $log->method = $contentObj->method?? '';
+            $log->id_pay = $contentObj->id_transaksi_pay ?? '';
+            $log->id_inq = $contentObj->id_transaksi_inq ?? '';
+            $log->nominal = isset($contentObj->nominal) && is_numeric($contentObj->nominal) ? $contentObj->nominal : 0;
+            $log->status = $contentObj->status ?? 0;
+            $log->ket = $contentObj->keterangan ?? '';
+            $log->content = $content;
+            $log->save();
+            return $log;
+        } else {
 
-        return $log;
+            return response()->json(['message' => 'Gagal mengambil data user'], 500);
+        }
     }
 
     // Generate Reff
@@ -155,6 +215,23 @@ class GenerateController extends Controller
         return $mutasi;
     }
 
+    // Save Ke mutasi Produk
+    public function mutasiP($response, $total_bayar)
+    {
+        $user = auth()->guard('api')->user();
+        $mutasi = Mutasi::create([
+            'id_user' => $user->id,
+            'id_transaksi' => $response->id_transaksi_pay,
+            'jenis_transaksi' => 'Transaksi',
+            'status' => 'Sukses',
+            'tanggal' => now(),
+            'debit' => $total_bayar,
+            'kredit' => 0
+        ]);
+
+        return $mutasi;
+    }
+
     // Saldo tidak cukup
     public function fail($idtransaksi, $nominal, $idPelanggan, $idMember, $ref1)
     {
@@ -168,6 +245,30 @@ class GenerateController extends Controller
             "id_pelanggan" => $idPelanggan,
             "nama_pelanggan" => "",
             "nominal" => $nominal,
+            "biaya_admin" => "",
+            "info" => "",
+            "id_member" => $idMember,
+            "ref1" => $ref1,
+            "id_transaksi_pay" => $idtransaksi,
+            "status" => "7",
+            "keterangan" => "Transfer dalam gangguan"
+        ];
+
+        return $response;
+    }
+
+    // Saldo tidak cukup
+    public function failProduk($idtransaksi, $idPelanggan, $idMember, $ref1)
+    {
+        $response = [
+            "method" => "transfer_bank_payment",
+            "kode_produk" => "TRSFBANK",
+            "waktu" => now()->format('Y-m-d H:i:s'),
+            "waktu_bayar" => now()->format('Y-m-d H:i:s'),
+            "id_transaksi_inq" => $idtransaksi,
+            "no_ref_pln" => "",
+            "id_pelanggan" => $idPelanggan,
+            "nama_pelanggan" => "",
             "biaya_admin" => "",
             "info" => "",
             "id_member" => $idMember,

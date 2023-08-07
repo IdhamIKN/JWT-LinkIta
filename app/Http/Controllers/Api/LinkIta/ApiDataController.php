@@ -21,10 +21,6 @@ use App\Models\mutasi;
 use Illuminate\Support\Facades\DB;
 
 
-
-
-
-
 class ApiDataController extends Controller
 {
     /**
@@ -33,7 +29,27 @@ class ApiDataController extends Controller
      * @return \Illuminate\Http\Response
      */
 
+
+
     // Cek Saldo
+    // public function getBalance()
+    // {
+    //     $Generate = new GenerateController;
+    //     $token = $Generate->getJwtToken();
+
+    //     $data = [
+    //         'request' => 'saldo',
+    //         'id_member' => env('ID_MEM')
+    //     ];
+
+    //     $url = env('LINKITA');
+    //     $response = Helper::DataLinkita($url, $data, $token);
+
+    //     // Simpan Log
+    //     $content = $response;
+
+    //     return $response;
+    // }
     public function getBalance()
     {
         $Generate = new GenerateController;
@@ -44,18 +60,22 @@ class ApiDataController extends Controller
             'id_member' => env('ID_MEM')
         ];
 
-        $url = env('LINKITA');
+        $url = 'https://api1.linkita.id';
+        // $url = env('SANDBOX');
         $response = Helper::DataLinkita($url, $data, $token);
+
+        // cek saldo
+        $responseObj = is_string($response) ? json_decode($response) : $response;
+        $saldo = $responseObj->nominal;
+
+        if ($saldo < 5000000) {
+            //  WhatsApp
+            $whatsappUrl = "https://wa.bmdsyariah.com/send-message?api_key=8ULKFZTqEjfrjgioeFqXAph04QkYAM&sender=62895622243141&number=6289618619880&message=MBAK%20MUK%20SALDONE%20DIBAWAH%205%20JUTA%20!!!!";
+            file_get_contents($whatsappUrl);
+        }
 
         // Simpan Log
         $content = $response;
-
-        // $log = new lk_log;
-        // $log->customer_id = '001';
-        // $log->status = 'Check Saldo';
-        // $log->ket = 'Check Saldo';
-        // $log->content = json_encode($response);
-        // $log->save();
 
         return $response;
     }
@@ -165,7 +185,6 @@ class ApiDataController extends Controller
         // Mengembalikan respon berupa link ke file PDF
         return response()->download($pdfPath, 'struk.pdf')->deleteFileAfterSend(true);
     }
-
 
     // Get Url Widget
     public function getUrlWidget(Request $request)

@@ -26,7 +26,7 @@ class LoginController extends Controller
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
-            CURLOPT_URL => 'https://api1.linkita.id/login',
+            CURLOPT_URL => 'https://api-sb.linkita.id/login',
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CUSTOMREQUEST => 'POST',
             CURLOPT_POSTFIELDS => json_encode([
@@ -79,5 +79,36 @@ class LoginController extends Controller
             // 'user' =>$user
         ], 200);
     }
+    // public function __invoke(Request $request)
+    // {
+    //     $validator = Validator::make($request->all(), [
+    //         'email'     => 'required',
+    //         'password'  => 'required'
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json($validator->errors(), 422);
+    //     }
+
+    //     $credentials = $request->only('email', 'password');
+
+
+    //     if (!$token = auth()->guard('api')->attempt($credentials)) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Email atau Password Anda salah'
+    //         ], 401);
+    //     }
+
+    //     $user = auth()->guard('api')->user();
+
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'user' =>$user
+    //         // 'Nama' =>$user->name,
+
+    //     ], 200);
+    // }
 }
 

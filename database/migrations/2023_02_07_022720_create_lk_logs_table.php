@@ -15,6 +15,7 @@ class CreateLkLogsTable extends Migration
     {
         Schema::create('lk_logs', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('id_user');
             $table->string('customer_id', 255)->nullable();
             $table->string('nama')->nullable();
             $table->string('method')->nullable();

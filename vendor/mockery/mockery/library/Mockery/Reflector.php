@@ -1,22 +1,11 @@
 <?php
 
 /**
- * Mockery
+ * Mockery (https://docs.mockery.io/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://github.com/padraic/mockery/blob/master/LICENSE
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to padraic@php.net so we can send you a copy immediately.
- *
- * @category   Mockery
- * @package    Mockery
- * @copyright  Copyright (c) 2017 Dave Marshall https://github.com/davedevelopment
- * @license    http://github.com/padraic/mockery/blob/master/LICENSE New BSD License
+ * @copyright https://github.com/mockery/mockery/blob/HEAD/COPYRIGHT.md
+ * @license   https://github.com/mockery/mockery/blob/HEAD/LICENSE BSD 3-Clause License
+ * @link      https://github.com/mockery/mockery for the canonical source repository
  */
 
 namespace Mockery;
@@ -132,7 +121,8 @@ class Reflector
      */
     private static function typeToString(\ReflectionType $type, \ReflectionClass $declaringClass)
     {
-        return \implode('|', \array_map(function (array $typeInformation) {
+        $char = $type instanceof \ReflectionIntersectionType ? "&" : "|";
+        return \implode($char, \array_map(function (array $typeInformation) {
             return $typeInformation['typeHint'];
         }, self::getTypeInformation($type, $declaringClass)));
     }
@@ -219,6 +209,10 @@ class Reflector
             return sprintf('?%s', $typeHint);
         }
 
-        return $typeHint === 'mixed' ? 'mixed' : sprintf('%s|null', $typeHint);
+        if ($typeHint === 'null' || $typeHint === 'mixed') {
+            return $typeHint;
+        }
+
+        return sprintf('%s|null', $typeHint);
     }
 }
